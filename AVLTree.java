@@ -1,3 +1,5 @@
+package avltree;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +12,7 @@ import java.util.Set;
  */
 public class AVLTree<T extends Comparable<T>> implements Set<T> {
 
-    public class Node<T> {
+    private class Node<T> {
 
         private T value;
         private int height;
@@ -39,11 +41,17 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
         public T getValue() {
             return value;
         }
+
+        private int bFactor() {
+            int lHeight = left == null ? 0 : left.getHeight();
+            int rHeight = right == null ? 0 : right.getHeight();
+            return rHeight - lHeight;
+        }
     }
 
     public class TreeIterator implements Iterator<T> {
 
-        private ArrayList<T> list = new ArrayList<>();
+        private final ArrayList<T> list = new ArrayList<>();
         private int index = -1;
 
         public TreeIterator() {
@@ -55,11 +63,11 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
                 return;
             }
             Node<T> leftNode = node.getLeft();
-            Node<T> rightNode = node.getRight();
-            list.add(node.value);
             if (leftNode != null) {
                 addElements(leftNode);
             }
+            list.add(node.value);
+            Node<T> rightNode = node.getRight();
             if (rightNode != null) {
                 addElements(rightNode);
             }
@@ -80,20 +88,10 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
 
     private Node<T> root;
     private int size = 0;
-    private boolean added;
-    private boolean removed;
-
-    private int getHeight(Node<T> node) {
-        return node == null ? 0 : node.height;
-    }
-
-    private int bFactor(Node<T> node) {
-        return getHeight(node.right) - getHeight(node.left);
-    }
 
     private void fixHeight(Node<T> node) {
-        int rightHeight = getHeight(node.right);
-        int leftHeight = getHeight(node.left);
+        int rightHeight = node.right == null ? 0 : node.right.height;
+        int leftHeight = node.left == null ? 0 : node.left.height;
         node.height = (leftHeight > rightHeight ? leftHeight : rightHeight) + 1;
     }
 
@@ -117,14 +115,14 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
 
     private Node<T> balance(Node<T> node) {
         fixHeight(node);
-        if (bFactor(node) == 2) {
-            if (bFactor(node.right) < 0) {
+        if (node.bFactor() == 2) {
+            if (node.right.bFactor() < 0) {
                 node.right = rotateRight(node.right);
             }
             return rotateLeft(node);
         }
-        if (bFactor(node) == -2) {
-            if (bFactor(node.left) > 0) {
+        if (node.bFactor() == -2) {
+            if (node.left.bFactor() > 0) {
                 node.left = rotateLeft(node.left);
             }
             return rotateRight(node);
@@ -161,10 +159,9 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
         if (root == null) {
             return false;
         }
-        if (o.getClass() != root.value.getClass()) {
-            return false;
-        }
-        return find((T) o, root) != null;
+        T t = (T) o;
+        Node<T> closest = find(t, root);
+        return closest != null && closest.value.compareTo(t) == 0;
     }
 
     @Override
@@ -175,36 +172,35 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
     @Override
     public Object[] toArray() {
         Object[] array = new Object[size];
-        addElements(root, array, 0);
+        Iterator it = new TreeIterator();
+        int i = 0;
+        while (it.hasNext()) {
+            array[i] = it.next();
+            i++;
+        }
         return array;
-    }
-
-    private int addElements(Node<T> node, Object[] array, int index) {
-        if (node == null) {
-            return 0;
-        }
-        Node<T> leftNode = node.getLeft();
-        Node<T> rightNode = node.getRight();
-        array[index] = node.value;
-        if (leftNode != null) {
-            index = addElements(leftNode, array, index + 1);
-        }
-        if (rightNode != null) {
-            index = addElements(rightNode, array, index + 1);
-        }
-        return index;
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
         if (a.length < size) {
-            T[] array = (Object)a.getClass() == (Object)Object[].class ?
-                    (T[]) new Object[size] :
-                    (T[]) Array.newInstance(a.getClass().getComponentType(), size);
-            addElements(root, array, 0);
+            T[] array = (Object) a.getClass() == (Object) Object[].class
+                    ? (T[]) new Object[size]
+                    : (T[]) Array.newInstance(a.getClass().getComponentType(), size);
+            Iterator it = new TreeIterator();
+            int i = 0;
+            while (it.hasNext()) {
+                array[i] = (T) it.next();
+                i++;
+            }
             return array;
         }
-        addElements(root, a, 0);
+        Iterator it = new TreeIterator();
+        int i = 0;
+        while (it.hasNext()) {
+            a[i] = (T) it.next();
+            i++;
+        }
         return a;
     }
 
@@ -212,32 +208,33 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
     public boolean add(T value) {
         if (root == null) {
             root = new Node(value);
-            added = true;
             size++;
-            return added;
+            return true;
+        }
+        if (contains(value)) {
+            return false;
         }
         root = add(value, root);
-        if (added == true) {
+        if (contains(value)) {
             size++;
+            return true;
         }
-        return added;
+        return false;
     }
 
     private Node<T> add(T value, Node<T> node) {
         if (node == null) {
-            added = true;
             return new Node(value);
         }
         int comparison = value.compareTo(node.value);
         if (comparison == 0) {
-            added = false;
             return balance(node);
         } else if (comparison < 0) {
             node.left = add(value, node.left);
         } else {
             node.right = add(value, node.right);
         }
-        return balance(node);
+        return node;
     }
 
     @Override
@@ -248,12 +245,15 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
         if (o.getClass() != root.value.getClass()) {
             return false;
         }
-        removed = false;
-        root = remove((T) o, root);
-        if (removed == true) {
-            size--;
+        if (!contains((T) o)) {
+            return false;
         }
-        return removed;
+        root = remove((T) o, root);
+        if (!contains((T) o)) {
+            size--;
+            return true;
+        }
+        return false;
     }
 
     private Node<T> findMin(Node<T> node) {
@@ -278,7 +278,6 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
         } else if (comparison > 0) {
             node.right = remove(value, node.right);
         } else {
-            removed = true;
             Node<T> leftNode = node.left;
             Node<T> rightNode = node.right;
             if (rightNode == null) {
@@ -289,7 +288,7 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
             minNode.left = leftNode;
             return balance(minNode);
         }
-        return balance(node);
+        return node;
     }
 
     @Override
@@ -308,11 +307,7 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
         boolean changed = false;
         Iterator it = c.iterator();
         while (it.hasNext()) {
-            Object o = it.next();
-            if (o.getClass() != root.value.getClass()) {
-                return false;
-            }
-            if (add((T) o)) {
+            if (add((T) it.next())) {
                 changed = true;
             }
         }
@@ -326,9 +321,6 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
         Iterator it = c.iterator();
         while (it.hasNext()) {
             Object o = it.next();
-            if (o.getClass() != root.value.getClass()) {
-                return false;
-            }
             if (contains(o)) {
                 if (!newTree.add((T) o)) {
                     changed = true;
