@@ -1,4 +1,7 @@
+package avltree;
+
 import java.util.ArrayList;
+import java.util.TreeSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -100,6 +103,19 @@ public class AVLTreeTest {
         }
     }
 
+    @Test
+    public void iterationTest() {
+        System.out.println("Iteration test #1");
+        AVLTree<Integer> tree = new AVLTree();
+        TreeSet<Integer> treeSet = new TreeSet<>();
+        for (int i = 0; i < 10; i++) {
+            int value = (int) (Math.random() * 20);
+            tree.add(value);
+            treeSet.add(value);
+        }
+        assertArrayEquals(tree.toArray(), treeSet.toArray());
+    }
+
     /**
      * Test of add method, of class AVLTree.
      */
@@ -124,6 +140,7 @@ public class AVLTreeTest {
         AVLTree<Integer> tree = new AVLTree();
         tree.add(10);
         boolean res = tree.add(10);
+        System.out.println("Sdasddas " + tree.contains(10));
         if (tree.contains(10) && !res) {
             System.out.println("Successful");
         } else {
@@ -196,9 +213,9 @@ public class AVLTreeTest {
         tree1.add(10);
         tree1.add(20);
         tree1.add(5);
-        AVLTree<String> tree2 = new AVLTree();
-        tree2.add("Cat");
-        tree2.add("Cats");
+        AVLTree<Integer> tree2 = new AVLTree();
+        tree2.add(3);
+        tree2.add(4);
         if (!tree1.containsAll(tree2)) {
             System.out.println("Successful");
         } else {
