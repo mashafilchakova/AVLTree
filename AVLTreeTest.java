@@ -1,6 +1,7 @@
 package avltree;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.TreeSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -12,6 +13,27 @@ import static org.junit.Assert.*;
 public class AVLTreeTest {
 
     public AVLTreeTest() {
+    }
+
+    @Test
+    public void orderTest() {
+        System.out.println("Order test #1");
+        AVLTree<Integer> tree = new AVLTree();
+        for (int i = 0; i < 10; i++) {
+            tree.add((int) (Math.random() * 100));
+        }
+        Iterator it = tree.iterator();
+        Object o1 = null, o2 = null;
+        if (it.hasNext()) {
+            o1 = it.next();
+        }
+        while (it.hasNext()) {
+            o2 = it.next();
+            if ((int) o1 >= (int) o2) {
+                fail("Test is not passed");
+            }
+            o1 = o2;
+        }
     }
 
     /**

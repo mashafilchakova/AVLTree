@@ -1,9 +1,10 @@
 package avltree;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 /**
@@ -51,11 +52,13 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
 
     public class TreeIterator implements Iterator<T> {
 
-        private final ArrayList<T> list = new ArrayList<>();
-        private int index = -1;
+        private final Object[] list;
+        private int index = 0;
 
         public TreeIterator() {
+            list = new Object[size];
             addElements(root);
+            index = -1;
         }
 
         private void addElements(Node<T> node) {
@@ -66,7 +69,8 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
             if (leftNode != null) {
                 addElements(leftNode);
             }
-            list.add(node.value);
+            list[index] = node.value;
+            index++;
             Node<T> rightNode = node.getRight();
             if (rightNode != null) {
                 addElements(rightNode);
@@ -75,13 +79,13 @@ public class AVLTree<T extends Comparable<T>> implements Set<T> {
 
         @Override
         public boolean hasNext() {
-            return index < list.size() - 1;
+            return index < list.length - 1;
         }
 
         @Override
         public T next() {
             index++;
-            return (list.get(index));
+            return ((T) list[index]);
         }
 
     }
